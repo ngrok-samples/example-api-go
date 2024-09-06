@@ -35,7 +35,7 @@ func loadTortoiseFacts(filename string) error {
 	return nil
 }
 
-func getFact(w http.ResponseWriter, r *http.Request) {
+func getRandomFact(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	randomFact := facts[rand.Intn(len(facts))]
 	json.NewEncoder(w).Encode(randomFact)
@@ -44,6 +44,22 @@ func getFact(w http.ResponseWriter, r *http.Request) {
 func getAllFacts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(facts)
+}
+
+func getFactByID(w http.ResponseWriter, r *http.Request) {
+	id := r.URL.Query().Get("id")
+	w.Header().Set("Content-Type", "application/json")
+
+  fmt.Printf("Returning fact: %v\n", id)
+
+	for _, fact := range facts {
+		if fact.ID == id {
+			json.NewEncoder(w).Encode(fact)
+			return
+		}
+	}
+
+	http.Error(w, "Fact not found", http.StatusNotFound)
 }
 
 func addFact(w http.ResponseWriter, r *http.Request) {
@@ -96,9 +112,10 @@ func main() {
 
 	// Start the Mux router.
 	router := mux.NewRouter()
-	router.HandleFunc("/fact", getFact).Methods("GET")
+	router.HandleFunc("/fact", getFactByID).Methods("GET")
 	router.HandleFunc("/facts", getAllFacts).Methods("GET")
 	router.HandleFunc("/add", addFact).Methods("POST")
+  router.HandleFunc("/random", getRandomFact).Methods("GET")
 
 	fmt.Println("API is running on http://localhost:5000")
 	log.Fatal(http.ListenAndServe(":5000", router))
