@@ -4,6 +4,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -11,12 +12,13 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+
 	"github.com/gorilla/mux"
 )
 
 type TortoiseFact struct {
-	ID		 string `json:"id"`
-	Fact	 string `json:"fact"`
+	ID   string `json:"id"`
+	Fact string `json:"fact"`
 }
 
 var facts []TortoiseFact
@@ -50,7 +52,7 @@ func getFactByID(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Query().Get("id")
 	w.Header().Set("Content-Type", "application/json")
 
-  fmt.Printf("Returning fact: %v\n", id)
+	fmt.Printf("Returning fact: %v\n", id)
 
 	for _, fact := range facts {
 		if fact.ID == id {
@@ -105,6 +107,9 @@ func generateUniqueID() string {
 }
 
 func main() {
+	port := flag.Int("port", 5000, "Port to run the server on")
+	flag.Parse()
+
 	err := loadTortoiseFacts("data/facts.json")
 	if err != nil {
 		fmt.Printf("Error loading tortoise facts: %v\n", err)
@@ -115,8 +120,8 @@ func main() {
 	router.HandleFunc("/fact", getFactByID).Methods("GET")
 	router.HandleFunc("/facts", getAllFacts).Methods("GET")
 	router.HandleFunc("/add", addFact).Methods("POST")
-  router.HandleFunc("/random", getRandomFact).Methods("GET")
+	router.HandleFunc("/random", getRandomFact).Methods("GET")
 
-	fmt.Println("API is running on http://localhost:5000")
-	log.Fatal(http.ListenAndServe(":5000", router))
+	fmt.Printf("API is running on http://localhost:%d\n", *port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", *port), router))
 }
